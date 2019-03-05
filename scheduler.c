@@ -10,10 +10,9 @@
 static void child(long [], long);
 
 void scheduler(char* input, char* outfile, int limit, int total){
-	int increment = 0, i = 0, k, status, seconds, alive = 1;
+	int increment = 0, i = 0, k, status, seconds, alive = 1, noChildFlag = 1;
 	long nanoSec, life, shmID, timer;
 	long * shmPTR;
-	bool noChildflag = true;
 	pid_t pid[total], endID = 1;
 	time_t when;
 	FILE * fp;
@@ -38,7 +37,7 @@ void scheduler(char* input, char* outfile, int limit, int total){
 			printf("Seconds: %d\n", seconds);
 			printf("Nanoseconds: %li\n", nanoSec);
 		}
-		while(shmPTR[0] < (seconds * 1000000000) + nanoSec)
+		while(shmPTR[0] < (seconds * 1000000000) + nanoSec){
 			printf("Goes until: %li\n", (shmPTR[0]+life));
 			printf("endID: %d; pid: %d\n", endID, pid);
 			shmPTR[0] += increment;
@@ -49,9 +48,9 @@ void scheduler(char* input, char* outfile, int limit, int total){
 		}
 		else{
 			printf("Child %d spawned.\n", pid[i]);
-			if (noChildFlag){
+			if (noChildFlag > 0){
 				alive--;
-				noChildFlag = false;
+				noChildFlag = 0;
 			}
 			alive++;
 			endID = waitpid(pid, &status, WNOHANG | WUNTRACED);
