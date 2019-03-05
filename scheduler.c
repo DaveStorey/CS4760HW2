@@ -10,9 +10,10 @@
 static void child(long [], long);
 
 void scheduler(char* input, char* outfile, int limit, int total){
-	int increment = 0, i = 0, k, status, seconds, alive = 0;
+	int increment = 0, i = 0, k, status, seconds, alive = 1;
 	long nanoSec, life, shmID, timer;
 	long * shmPTR;
+	bool noChildflag = true;
 	pid_t pid[total], endID = 1;
 	time_t when;
 	FILE * fp;
@@ -30,12 +31,14 @@ void scheduler(char* input, char* outfile, int limit, int total){
 	shmPTR = (long *) shmat(shmID, NULL, 0);
 	shmPTR[0] = increment;
 	printf("Timer1: %li\n", shmPTR[0]);
-	while((i < total) && (fscanf(fp, "%d", &seconds) == 1)){
-		fscanf(fp, "%li", &nanoSec);
-		fscanf(fp, "%li", &life);
-		printf("Seconds: %d\n", seconds);
-		printf("Nanoseconds: %li\n", nanoSec);
-		while((((seconds*1000000000) + nanoSec + life)>shmPTR[0]) && (endID != pid)){
+	while(alive > 0){
+		if (fscanf(fp, "%d", &seconds) == 1){
+			fscanf(fp, "%li", &nanoSec);
+			fscanf(fp, "%li", &life);
+			printf("Seconds: %d\n", seconds);
+			printf("Nanoseconds: %li\n", nanoSec);
+		}
+		while(shmPTR[0] < (seconds * 1000000000) + nanoSec)
 			printf("Goes until: %li\n", (shmPTR[0]+life));
 			printf("endID: %d; pid: %d\n", endID, pid);
 			shmPTR[0] += increment;
@@ -46,6 +49,10 @@ void scheduler(char* input, char* outfile, int limit, int total){
 		}
 		else{
 			printf("Child %d spawned.\n", pid[i]);
+			if (noChildFlag){
+				alive--;
+				noChildFlag = false;
+			}
 			alive++;
 			endID = waitpid(pid, &status, WNOHANG | WUNTRACED);
 			if (endID == -1){
