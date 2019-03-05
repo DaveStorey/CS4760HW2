@@ -14,7 +14,7 @@
 
 
 int main(int argc, char * argv[]){      
-	int opt, limit = 50, x = 0, total = 50;
+	int opt, limit = 50, x = 0, total = 5;
 	char * outfile;
 	char * infile;
 	//Assigning default case names.
@@ -48,5 +48,6 @@ int main(int argc, char * argv[]){
 		} while((opt = getopt(argc, argv, "-hiosn")) != -1);
 	}
 	scheduler(infile, outfile, limit, total);
+	wait(10);
 	return 0; 
 }

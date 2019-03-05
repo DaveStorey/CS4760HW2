@@ -10,10 +10,10 @@
 static void child(long [], long);
 
 void scheduler(char* input, char* outfile, int limit, int total){
-	int increment = 0, i = 0, k, status, seconds;
+	int increment = 0, i = 0, k, status, seconds, alive = 0;
 	long nanoSec, life, shmID, timer;
 	long * shmPTR;
-	pid_t pid, endID = 1;
+	pid_t pid[total], endID = 1;
 	time_t when;
 	FILE * fp;
 	time(&when);
@@ -41,12 +41,12 @@ void scheduler(char* input, char* outfile, int limit, int total){
 			shmPTR[0] += increment;
 			sleep(1);
 		}
-		if((pid = fork()) == 0){
+		if((pid[i] = fork()) == 0){
 			child(shmPTR, life);
 		}
 		else{
-			i++;
-			printf("Child %d spawned.\n", pid);
+			printf("Child %d spawned.\n", pid[i]);
+			alive++;
 			endID = waitpid(pid, &status, WNOHANG | WUNTRACED);
 			if (endID == -1){
 				perror("waitpid error");
@@ -54,22 +54,27 @@ void scheduler(char* input, char* outfile, int limit, int total){
 			else if (endID == 0){
 				printf("Parent waiting on child %d.\n", pid);
 			}
-			else if (endID == pid){
-				if (WIFEXITED(status)){
-					printf("Child ended normally.\n");
+			else{
+				for(k = 0; k <= i; k++){
+					if(endID == pid[k]){
+						alive--;
+						if (WIFEXITED(status)){
+							printf("Child ended normally.\n");
+						}
+						else if (WIFSIGNALED(status)){
+							printf("Child ended with an uncaught signal.\n");
+						}
+						else if (WIFSTOPPED(status)){
+							printf("Child process has stopped.\n");
+						}
+					}
 				}
-				else if (WIFSIGNALED(status)){
-					printf("Child ended because of an uncaught signal.\n");
-				}
-				else if (WIFSTOPPED(status)){
-					printf("Child process has stopped.\n");
-				}
+			i++;
 			}
 		}
+		printf("Timer: %li\n", shmPTR[0]);
+		shmdt(shmPTR);
 	}
-	i++;
-	printf("Timer: %li\n", shmPTR[0]);
-	shmdt(shmPTR);
 }
 
 void child(long sharedMem[], long life){
