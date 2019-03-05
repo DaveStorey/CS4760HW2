@@ -48,6 +48,5 @@ int main(int argc, char * argv[]){
 		} while((opt = getopt(argc, argv, "-hiosn")) != -1);
 	}
 	scheduler(infile, outfile, limit, total);
-	wait(10);
 	return 0; 
 }
