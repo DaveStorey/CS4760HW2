@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/wait.h>
@@ -12,7 +13,8 @@ void scheduler(char* input, char* outfile, int limit, int total){
 	int increment = 0, i = 0, k, status, alive = 1, noChildFlag = 1;
 	unsigned long nanoSec, life, shmID, seconds = 10000;
 	unsigned long * shmPTR;
-	pid_t pid[total], endID = 1;
+	char * parameter[32], parameter1[32], parameter2[32], parameter3[32];
+	pid_t pid[total], endID = 1; 
 	time_t when, when2;
 	FILE * fp;
 	key_t key;
@@ -33,28 +35,29 @@ void scheduler(char* input, char* outfile, int limit, int total){
 	for(k = 0; k < total; k++){
 		pid[k] = -1;
 	}
-	while(alive > 0){
+//	while(alive > 0){
+	for(int j = 0; j < 3; j++){
 		time(&when2);
-		if ((when2 - when) >= 1){
+		if ((when2 - when) >= 2){
 			printf("Program has exceeded its allotted time, exiting.\n");
 			shmdt(shmPTR);
 			wait(NULL);
-			break;
+			exit(EXIT_SUCCESS);
 		}
 		if (seconds > 1000){
 			if (fscanf(fp, "%d", &seconds) !=EOF){
 				fscanf(fp, "%li", &nanoSec);
 				fscanf(fp, "%li", &life);
-				printf("New child time values. %li : %li\n", seconds, nanoSec);
 			}
 		}
 		shmPTR[0] += increment;
 		if(shmPTR[0] >= ((seconds * 1000000000) + nanoSec)){
-			printf("%d:", seconds);
-			printf(" %li\n", nanoSec);
-			printf("Timer: %li\n", shmPTR[0]);
 			if((pid[i] = fork()) == 0){
-				execve("./child", "./child", key, shmID, life) ;
+				sprintf(parameter1, "%li", key);
+				sprintf(parameter2, "%li", shmID);
+				sprintf(parameter3, "%li", life);
+				char * args[] = {parameter1, parameter2, parameter3, NULL};
+				execvp("./child\0", args);
 			}
 			else{
 				printf("Child %d spawned.\n", pid[i]);
@@ -62,7 +65,7 @@ void scheduler(char* input, char* outfile, int limit, int total){
 					alive--;
 					noChildFlag = 0;
 				}
-				seconds = 10000;
+				seconds = 100000;
 				nanoSec = 0;
 				life = 0;
 				alive++;
@@ -83,7 +86,7 @@ void scheduler(char* input, char* outfile, int limit, int total){
 							printf("Child ended normally.\n");
 						}
 						else if (WIFSIGNALED(status)){
-							printf("Child ended with an uncaught signal.\n");
+							printf("Child ended with an uncaught signal, %d.\n", status);
 						}
 						else if (WIFSTOPPED(status)){
 							printf("Child process has stopped.\n");
@@ -96,9 +99,9 @@ void scheduler(char* input, char* outfile, int limit, int total){
 			printf("Program has exceeded its allotted children, exiting.\n");
 			shmdt(shmPTR);
 			wait(NULL);
-			break;
+			exit(EXIT_SUCCESS);
 		}
 	}
-	printf("Timer: %li\n", shmPTR[0]);
+	wait(NULL);
 	shmdt(shmPTR);
 }
