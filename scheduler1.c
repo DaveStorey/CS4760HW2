@@ -9,7 +9,7 @@
 #include <time.h>
 #include <signal.h>
 
-
+//Signal handler to catch ctrl-c
 static volatile int keepRunning = 1;
 
 void intHandler(int dummy) {
@@ -17,17 +17,25 @@ void intHandler(int dummy) {
 }
 
 void scheduler(char* input, char* outfile, int limit, int total){
-	int increment = 0, i = 0, k, status, alive = 1, noChildFlag = 1, totalFlag = 0, timeFlag = 0, limitFlag = 0;
-	unsigned long nanoSec, life, shmID, seconds = 10000;
+	/*Variables for the keeping track of pids, a loop variable, waitPID status, how many processes are alive, a flag for if there have been any children spawned, a flag for if the overall total has been reached, a flag for if the time limit has been reached, and a flag for if the instant limit has been reached.*/
+	int i = 0, k, status, totalSpawn = 0, alive = 1, noChildFlag = 1, totalFlag = 0, timeFlag = 0, limitFlag = 0;
+	//Variables for process nanoseconds, life, shared memory ID, seconds, and the timer increment, respectively.
+	unsigned long nanoSec, life, shmID, seconds = 10000, increment = 0;
+	//Pointer for the shared memory timer
 	unsigned long * shmPTR;
+	//Character pointers for arguments to pass through exec
 	char * parameter[32], parameter1[32], parameter2[32], parameter3[32];
 	pid_t pid[total], endID = 1; 
+	//Time variables for the time out function
 	time_t when, when2;
+	//File pointers for input and output, respectively
 	FILE * fp;
 	FILE * outPut;
+	//Key variable for shared memory access.
 	unsigned long key;
 	srand(time(0));
 	key = rand();
+	//Setting initial time for later check.
 	time(&when);
 	outPut = fopen(outfile, "a");
 	fp = fopen(input, "r");
@@ -43,29 +51,39 @@ void scheduler(char* input, char* outfile, int limit, int total){
 		printf("No output generated.\n");
 		exit(EXIT_SUCCESS);
 	}
-	fscanf(fp, "%d", &increment);
+	//Scan first line for timer increment
+	fscanf(fp, "%li", &increment);
+	//Get and access shared memory, setting initial timer state to 0.
 	shmID = shmget(key, sizeof(unsigned long), IPC_CREAT | IPC_EXCL | 0777);
 	shmPTR = (unsigned long *) shmat(shmID, NULL, 0);
 	shmPTR[0] = 0;
+	//Initializing pids to -1 
 	for(k = 0; k < total; k++){
 		pid[k] = -1;
 	}
+	//Call to signal handler for ctrl-c
 	signal(SIGINT, intHandler);
-	while((alive > 0) && (keepRunning == 1)){
+	//While loop keeps running until all children are dead, ctrl-c, or time is reached.
+	while((alive > 0) && (keepRunning == 1) && (timeFlag == 0)){
 		time(&when2);
 		if ((when2 - when) >= 2){
 			timeFlag = 1;
 		}
+		//Incrementing the timer.
 		shmPTR[0] += increment;
-		if((timeFlag == 0) && (totalFlag == 0) && (limitFlag == 0)){
+		/*If statement will only run check for new children to spawn if limit has not been hit.  If limit has been hit, it will allow the clock to continue to increment to allow currently alive children to naturally die.*/
+		if((totalFlag == 0) && (limitFlag == 0)){
+		//If statement to ensure same child isn't spawned twice.
 			if (seconds > 1000){
 				if (fscanf(fp, "%li", &seconds) !=EOF){
 					fscanf(fp, "%li", &nanoSec);
 					fscanf(fp, "%li", &life);
 				}
 			}
+			//If statement to spawn child if timer has passed its birth time.
 			if(shmPTR[0] >= ((seconds * 1000000000) + nanoSec)){
 				if((pid[i] = fork()) == 0){
+				//Converting key, shmID and life to char* for passing to exec.
 					sprintf(parameter1, "%li", key);
 					sprintf(parameter2, "%li", shmID);
 					sprintf(parameter3, "%li", life);
@@ -74,24 +92,29 @@ void scheduler(char* input, char* outfile, int limit, int total){
 					execvp("./child\0", args);
 				}
 				else{
+				//If statement to reset alive counter after getting into while loop initially
 					if (noChildFlag > 0){
 						alive--;
 						noChildFlag = 0;
 					}
+				//Setting seconds to high number for above loop protecting against twin children.
 					seconds = 100000;
 					nanoSec = 0;
 					life = 0;
 					alive++;
+					totalSpawn++;
 					i++;
 				}
 			}
 		}
+		//EndID to check for status of group children
 		endID = waitpid(0, &status, WNOHANG | WUNTRACED);
 		if (endID == -1){
-//			perror("waitpid error");
+			perror("waitpid error");
 		}
 		else if (endID == 0);
 		else{
+		//For loop steps through array of pids, checking if return value matches.
 			for(k = 0; k <= i; k++){
 				if(endID == pid[k]){
 					alive--;
@@ -111,7 +134,8 @@ void scheduler(char* input, char* outfile, int limit, int total){
 				}
 			}
 		}
-		if (alive >= total){
+		//If statements check against total children spawned and instant limit.
+		if (totalSpawn >= total){
 			totalFlag = 1;
 		}
 		if (alive >= limit){
