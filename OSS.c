@@ -9,25 +9,25 @@
 #include<sys/shm.h>
 #include<sys/types.h>
 #include<string.h>
+#include<stdlib.h>
 #include "help.h"
 #include "scheduler.h"
 
 
 int main(int argc, char * argv[]){      
-	int opt, limit = 50, x = 0, total = 5;
+	int opt, limit = 5, x = 0, total = 10, hFlag = 0;
 	char * outfile;
 	char * infile;
 	//Assigning default case names.
-	if (argc == 1){
-		infile = "input.dat";
-		outfile = "output.dat";
-	}
+	infile = "input.txt";
+	outfile = "output.txt";
 	if((opt = getopt(argc, argv, "-hiosn")) != -1){
 		do{
 			x++;
 			switch(opt){
 			case 'h':
-				//help();
+				help();
+				hFlag = 1;
 				break;
 			case 'i':
 				infile = argv[x+1];
@@ -47,6 +47,7 @@ int main(int argc, char * argv[]){
 			}
 		} while((opt = getopt(argc, argv, "-hiosn")) != -1);
 	}
-	scheduler(infile, outfile, limit, total);
+	if (hFlag == 0)
+		scheduler(infile, outfile, limit, total);
 	return 0; 
 }

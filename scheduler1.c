@@ -7,7 +7,14 @@
 #include <sys/shm.h>
 #include <sys/wait.h>
 #include <time.h>
+#include <signal.h>
 
+
+static volatile int keepRunning = 1;
+
+void intHandler(int dummy) {
+    keepRunning = 0;
+}
 
 void scheduler(char* input, char* outfile, int limit, int total){
 	int increment = 0, i = 0, k, status, alive = 1, noChildFlag = 1, totalFlag = 0, timeFlag = 0, limitFlag = 0;
@@ -18,7 +25,7 @@ void scheduler(char* input, char* outfile, int limit, int total){
 	time_t when, when2;
 	FILE * fp;
 	FILE * outPut;
-	key_t key;
+	unsigned long key;
 	srand(time(0));
 	key = rand();
 	time(&when);
@@ -43,16 +50,16 @@ void scheduler(char* input, char* outfile, int limit, int total){
 	for(k = 0; k < total; k++){
 		pid[k] = -1;
 	}
-	while(alive > 0){
+	signal(SIGINT, intHandler);
+	while((alive > 0) && (keepRunning == 1)){
 		time(&when2);
 		if ((when2 - when) >= 2){
-			printf("Program has exceeded its allotted time, exiting.\n");
 			timeFlag = 1;
 		}
 		shmPTR[0] += increment;
 		if((timeFlag == 0) && (totalFlag == 0) && (limitFlag == 0)){
 			if (seconds > 1000){
-				if (fscanf(fp, "%d", &seconds) !=EOF){
+				if (fscanf(fp, "%li", &seconds) !=EOF){
 					fscanf(fp, "%li", &nanoSec);
 					fscanf(fp, "%li", &life);
 				}
@@ -63,6 +70,7 @@ void scheduler(char* input, char* outfile, int limit, int total){
 					sprintf(parameter2, "%li", shmID);
 					sprintf(parameter3, "%li", life);
 					char * args[] = {parameter1, parameter2, parameter3, NULL};
+					fprintf(outPut, "Child process %d launched with %s lifetime.\n", getpid(), parameter3);
 					execvp("./child\0", args);
 				}
 				else{
@@ -90,7 +98,7 @@ void scheduler(char* input, char* outfile, int limit, int total){
 					if (alive >= 0){
 						if (WIFEXITED(status)){
 							limitFlag = 0;
-							
+							fprintf(outPut, "Child process %d terminated at %li nanoseconds.\n", pid[k], shmPTR[0]);
 						}
 						else if (WIFSIGNALED(status)){
 							printf("Child ended with an uncaught signal, %d.\n", status);
@@ -103,13 +111,26 @@ void scheduler(char* input, char* outfile, int limit, int total){
 				}
 			}
 		}
-		if (alive > total){
-			printf("Program has exceeded its allotted children, exiting.\n");
+		if (alive >= total){
 			totalFlag = 1;
 		}
-		if (alive > limit){
+		if (alive >= limit){
 			limitFlag = 1;
 		}
 	}
+	if(timeFlag == 1){
+		printf("Program has reached its allotted time, exiting.\n");
+		fprintf(outPut, "Scheduler terminated at %li nanoseconds due to time limit.\n",  shmPTR[0]);
+	}
+	if(totalFlag == 1){
+		printf("Program has reached its allotted children, exiting.\n");
+		fprintf(outPut, "Scheduler terminated at %li nanoseconds due to process limit.\n",  shmPTR[0]);
+	}
+	if(keepRunning == 0){
+		printf("Terminated due to ctrl-c signal.\n");
+		fprintf(outPut, "Scheduler terminated at %li nanoseconds due to ctrl-c signal.\n",  shmPTR[0]);
+	}
 	shmdt(shmPTR);
+	fclose(fp);
+	fclose(outPut);
 }

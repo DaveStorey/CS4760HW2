@@ -11,7 +11,7 @@ int main(int argc, char * argv[]){
 	char * ptr;
 	pid_t pid = getpid();
 	unsigned long * shmPTR;
-	key_t key = strtoul(argv[0], &ptr, 10);
+	unsigned long key = strtoul(argv[0], &ptr, 10);
 	unsigned long life = strtoul(argv[2], &ptr, 10);
 	unsigned long shmID = strtoul(argv[1], &ptr, 10);
 	unsigned long existence;
