@@ -1,6 +1,3 @@
-#ifndef SCHEDULER
-#define SCHEDULER
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -161,5 +158,3 @@ void scheduler(char* input, char* outfile, int limit, int total){
 	fclose(fp);
 	fclose(outPut);
 }
-
-#endif

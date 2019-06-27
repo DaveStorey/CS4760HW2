@@ -1,0 +1,5 @@
+David Storey
+Operating Systems
+March 5, 2019
+Project 2
+This project takes several optional command line arguments and will spawn a number of child processes using fork() and execvp().  The child processes access shared memory in the form of a timer that is incremented according to an input file.  They don't do anything until their allotted lifetime is up, at which time they will print some information and exit.  The scheduler function keeps track of them, as well as user-defined limits on how many there are and how long the process has been running.  The -h option gives more specifics on the command line arguments.

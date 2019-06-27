@@ -1,6 +1,3 @@
-#ifndef HELP
-#define HELP
-
 #include<stdio.h>
 
 void help(){
@@ -16,5 +13,3 @@ void help(){
 	printf("If no input file is specified, input.txt will be used; if no output, output.txt.\n");
 	printf("files, use -i <inputfile> -o <outputfile>.\n");
 }
-
-#endif

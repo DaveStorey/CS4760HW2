@@ -1,0 +1,59 @@
+commit bce7e38da5d72222a20e171be21b8c1b3571fe6c
+Author: David Storey <dstorey65@gmail.com>
+Date:   Tue Mar 5 20:26:21 2019 -0600
+
+    Comments added
+
+commit a5e783706b7fd5d245133d7ddd69ce7b91a87827
+Author: David Storey <dstorey65@gmail.com>
+Date:   Tue Mar 5 19:52:39 2019 -0600
+
+    Everything works!
+
+commit a541248731601ea1fc515f1890e3cc1f132d3d48
+Author: David Storey <dstorey65@gmail.com>
+Date:   Tue Mar 5 19:03:52 2019 -0600
+
+    Children and parent playing nicely together, just need to format output.
+
+commit 549f496bdf439e4f2de5f14687604b88787fde04
+Author: David Storey <dstorey65@gmail.com>
+Date:   Tue Mar 5 18:30:13 2019 -0600
+
+    First evidence of child exec accessing shared memory.
+
+commit 87e0837ea6a7d0e05eff57864bb92207a94b7bf2
+Author: David Storey <dstorey65@gmail.com>
+Date:   Tue Mar 5 16:21:49 2019 -0600
+
+    First commit after noticing the exec requirement.
+
+commit faf61acb8f5ab4ee67c172cf85310242c894f35c
+Author: David Storey <dstorey65@gmail.com>
+Date:   Tue Mar 5 11:47:02 2019 -0600
+
+    Attempted zombie solution:if statements inside while loop
+
+commit 38968880c46c9bdb93a8df32a30f4237e5bad016
+Author: David Storey <dstorey65@gmail.com>
+Date:   Tue Mar 5 11:28:54 2019 -0600
+
+    Loop alterations attempting to solve zombie processes take 2
+
+commit acd8dfe8492b16e7945f8a770ddee822ea5c64d9
+Author: David Storey <dstorey65@gmail.com>
+Date:   Tue Mar 5 11:26:29 2019 -0600
+
+    Loop alterations attempting to solve zombie processes
+
+commit 7a30b3ca8a3d9d1dc015b8c7249555a678482a26
+Author: David Storey <dstorey65@gmail.com>
+Date:   Tue Mar 5 11:02:35 2019 -0600
+
+    Array of PIDs
+
+commit 675d3eb430cbb1862f21f4bfa8c0322855c19a68
+Author: David Storey <dstorey65@gmail.com>
+Date:   Tue Mar 5 10:53:04 2019 -0600
+
+    First commit
